@@ -2,7 +2,7 @@ import styled from '@emotion/styled'
 import {useState, useEffect} from 'react'
 import returnUserEvents from './returnUserEvents'
 
-const { AddEvento, EditEvento, formatDate } = require('../eventos/modules');
+const { addEvento, editEvento, deleteEvento, formatDate } = require('../eventos/modules');
 
 export default function Eventos({ token, userData }) {
     const [eventos, setEventos] = useState(null);
@@ -28,7 +28,7 @@ export default function Eventos({ token, userData }) {
     };
 
     const handleSaveEdit = async (id) => {
-        await EditEvento(id, eventoEditado, token, setMessage, setEventos);
+        await editEvento(id, eventoEditado, token, setMessage, setEventos);
         setEditandoEventoId(null);
     };
 
@@ -36,7 +36,7 @@ export default function Eventos({ token, userData }) {
         <Container>
             <div className='eventos'>
                 <div>
-                    <form onSubmit={(e) => AddEvento(e, token, userData, setMessage, setEventos)}>
+                    <form onSubmit={(e) => addEvento(e, token, userData, setMessage, setEventos)}>
                         <input type="text" name="descricao" placeholder="Descrição do evento" required />
                         <input type="datetime-local" name="inicio" required />
                         <input type="datetime-local" name="termino" required />
@@ -67,6 +67,7 @@ export default function Eventos({ token, userData }) {
                                     />
                                     <button onClick={() => handleSaveEdit(e.documentId)}>Salvar</button>
                                     <button onClick={() => setEditandoEventoId(null)}>Cancelar</button>
+                                    <button onClick={() => deleteEvento(e.documentId, token, setEventos, setMessage, setEditandoEventoId, userData)}>🗑️ Excluir</button>
                                 </>
                             ) : (
                                 <>
