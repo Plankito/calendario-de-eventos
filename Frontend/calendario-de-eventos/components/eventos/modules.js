@@ -1,6 +1,6 @@
 
 const API_URL = process.env['NEXT_PUBLIC_API_URL'];
-async function AddEvento(event, token, userData, setMessage, setEventos) {
+async function addEvento(event, token, userData, setMessage, setEventos) {
     event.preventDefault();
     setMessage(null);
 
@@ -57,7 +57,7 @@ async function AddEvento(event, token, userData, setMessage, setEventos) {
 
 
 
-async function EditEvento(documentId, eventoEditado, token, setMessage, setEventos) {
+async function editEvento(documentId, eventoEditado, token, setMessage, setEventos) {
     setMessage(null);
 
     const reqOptions = {
@@ -91,8 +91,38 @@ async function EditEvento(documentId, eventoEditado, token, setMessage, setEvent
 }
 
 
-function DeleteEvento({}){
-    return
+async function deleteEvento(documentId, token, setEventos, setMessage, setEditandoEventoId, userData) {
+    if (!documentId) return;
+    
+    const confirmDelete = window.confirm("Tem certeza que deseja excluir este evento?");
+    if (!confirmDelete) return;
+
+    try {
+        const response = await fetch(`http://localhost:1337/api/eventos/${documentId}`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+        });
+
+        if (!response.ok) throw new Error("Erro ao excluir evento");
+
+        setMessage("Evento excluído com sucesso!");
+        setEditandoEventoId(null)
+        
+        const updatedEventosReq = await fetch(`${API_URL}/api/eventos/?filters[user_id][$eq]=${userData.id}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        const updatedEventos = await updatedEventosReq.json();
+
+        setEventos(updatedEventos);
+        
+    } catch (error) {
+        setMessage("Erro ao excluir o evento");
+    }
 }
 
 function formatDate(dateString) {
@@ -110,8 +140,8 @@ function formatDate(dateString) {
 }
 
 module.exports = {
-    AddEvento,
-    EditEvento,
-    DeleteEvento,
+    addEvento,
+    editEvento,
+    deleteEvento,
     formatDate
  };
