@@ -57,9 +57,39 @@ async function AddEvento(event, token, userData, setMessage, setEventos) {
 
 
 
-function EditEvento({}){
-    return
+async function EditEvento(documentId, eventoEditado, token, setMessage, setEventos) {
+    setMessage(null);
+
+    const reqOptions = {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ data: eventoEditado })
+    };
+
+    try {
+        const req = await fetch(`${API_URL}/api/eventos/${documentId}`, reqOptions);
+        const res = await req.json();
+
+        if (res.error) {
+            setMessage(res.error.message);
+            return;
+        }
+
+        setEventos(prev => ({
+            ...prev,
+            data: prev.data.map(evento => evento.documentId === documentId ? res.data : evento)
+        }));
+
+        setMessage("Evento atualizado com sucesso!");
+    } catch (error) {
+        console.error('Erro ao editar evento:', error);
+        setMessage("Erro ao editar evento.");
+    }
 }
+
 
 function DeleteEvento({}){
     return
