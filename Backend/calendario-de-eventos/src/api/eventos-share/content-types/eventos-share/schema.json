@@ -1,0 +1,26 @@
+{
+  "kind": "collectionType",
+  "collectionName": "eventos_shares",
+  "info": {
+    "singularName": "eventos-share",
+    "pluralName": "eventos-shares",
+    "displayName": "Eventos-share"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "evento": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::evento.evento"
+    },
+    "users_id": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "plugin::users-permissions.user",
+      "mappedBy": "eventos_share"
+    }
+  }
+}
