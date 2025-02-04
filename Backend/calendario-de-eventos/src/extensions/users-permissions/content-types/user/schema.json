@@ -65,11 +65,11 @@
       "inversedBy": "users",
       "configurable": false
     },
-    "eventos_share": {
+    "eventos_shares": {
       "type": "relation",
-      "relation": "manyToOne",
+      "relation": "manyToMany",
       "target": "api::eventos-share.eventos-share",
-      "inversedBy": "users_id"
+      "mappedBy": "users_ids"
     }
   }
 }

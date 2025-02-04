@@ -1,7 +1,14 @@
 import styled from '@emotion/styled'
+import { useRouter } from 'next/router';
 import Link from 'next/link'
 
-export default function Footer(){
+export default function Header(){
+    const router = useRouter();
+
+    const handleLogout = () => {
+        document.cookie = "jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        router.push('/login');
+    };
     return(
         <Container>
             <div className="container-div">
@@ -11,21 +18,16 @@ export default function Footer(){
                 </a>
                 <nav>
                     <ul>
-                        <li><Link href='https://www.tokenlab.com.br/pt/blog'>Blog</Link></li>
-                        <li><Link href='https://www.tokenlab.com.br/pt/contact'>Contato</Link></li>
-                        <li><Link href='https://www.tokenlab.com.br/pt/terms'>Termos e Condições</Link></li>
-                        <li><Link href='https://www.tokenlab.com.br/pt/privacy'>Política de Privacidade</Link></li>
-                        <li><Link href='https://www.tokenlab.com.br/pt/about'>Sobre nós</Link></li>
-                        <li><Link href='https://www.tokenlab.com.br/pt/careers'>Carreira</Link></li>
+                        <li><Link href="#" onClick={handleLogout}><i class="fa fa-sign-out" aria-hidden="true"></i></Link></li>
                     </ul>
-                </nav>Link
+                </nav>
                 {/* <p>Projeto TokenLab</p> */}
             </div>
         </Container>
     )
 }
 
-const Container = styled.footer`
+const Container = styled.header`
     background: var(--header-background);
     color: var(--foreground);
     padding: 16px;
@@ -36,7 +38,7 @@ const Container = styled.footer`
     }
 
     nav{
-        margin-left: 100px;
+        //margin-left: 100px;
         display: flex;
         align-items: center;
         ul{

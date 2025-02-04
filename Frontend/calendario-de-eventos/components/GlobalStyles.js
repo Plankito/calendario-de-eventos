@@ -8,7 +8,7 @@ const GlobalStyles = () => (
         --background: rgba(253,253,253);
         --header-background: linear-gradient(180deg, rgba(38, 168, 219, 0.6) 5%, rgba(41, 224, 200, 0.6) 90%);
         --footer-background: linear-gradient(180deg, rgba(41, 224, 200, 0.6) 5%, rgba(38, 168, 219, 0.6) 90%);
-        --max-width: 1800px;
+        --max-width: 1450px;
         --min-height: 85vh;
         }
 

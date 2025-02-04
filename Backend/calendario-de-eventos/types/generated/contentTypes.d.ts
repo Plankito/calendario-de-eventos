@@ -408,6 +408,7 @@ export interface ApiEventosShareEventosShare
   extends Struct.CollectionTypeSchema {
   collectionName: 'eventos_shares';
   info: {
+    description: '';
     displayName: 'Eventos-share';
     pluralName: 'eventos-shares';
     singularName: 'eventos-share';
@@ -430,8 +431,8 @@ export interface ApiEventosShareEventosShare
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    users_id: Schema.Attribute.Relation<
-      'oneToMany',
+    users_ids: Schema.Attribute.Relation<
+      'manyToMany',
       'plugin::users-permissions.user'
     >;
   };
@@ -906,8 +907,8 @@ export interface PluginUsersPermissionsUser
       Schema.Attribute.SetMinMaxLength<{
         minLength: 6;
       }>;
-    eventos_share: Schema.Attribute.Relation<
-      'manyToOne',
+    eventos_shares: Schema.Attribute.Relation<
+      'manyToMany',
       'api::eventos-share.eventos-share'
     >;
     locale: Schema.Attribute.String & Schema.Attribute.Private;

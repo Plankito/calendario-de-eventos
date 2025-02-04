@@ -4,7 +4,8 @@
   "info": {
     "singularName": "eventos-share",
     "pluralName": "eventos-shares",
-    "displayName": "Eventos-share"
+    "displayName": "Eventos-share",
+    "description": ""
   },
   "options": {
     "draftAndPublish": true
@@ -16,11 +17,11 @@
       "relation": "oneToOne",
       "target": "api::evento.evento"
     },
-    "users_id": {
+    "users_ids": {
       "type": "relation",
-      "relation": "oneToMany",
+      "relation": "manyToMany",
       "target": "plugin::users-permissions.user",
-      "mappedBy": "eventos_share"
+      "inversedBy": "eventos_shares"
     }
   }
 }

@@ -32,6 +32,11 @@ const Container = styled.div`
   flex-direction: column;
   min-height: var(--min-height);
   max-width: var(--max-width);
-  margin: 0 auto;
+  margin: 0 auto 30px;
+
+  h1{
+    margin: 20px;
+    text-align: center;
+  }
   
 `
