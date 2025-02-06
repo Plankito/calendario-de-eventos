@@ -2,7 +2,7 @@ import styled from '@emotion/styled'
 import { useState, useEffect } from 'react'
 import returnUserEvents from './returnUserEvents'
 
-const { addEvento, editEvento, deleteEvento, recusarEvento, formatDate } = require('../eventos/modules');
+const { addEvento, editEvento, deleteEvento, recusarEvento, formatDate, agruparEventosPorMes } = require('../eventos/modules');
 
 export default function Eventos({ token, userData }) {
     const [eventos, setEventos] = useState(null);
@@ -56,6 +56,7 @@ export default function Eventos({ token, userData }) {
         setEditandoEventoId(null);
         setMessages({});
     };
+    const eventosAgrupados = eventos ? agruparEventosPorMes(eventos.data) : {};
 
     return (
         <Container>
@@ -86,42 +87,45 @@ export default function Eventos({ token, userData }) {
 
             <div className="section">
                 <h2>Meus Eventos</h2>
-                {eventos && eventos.data
-                    .sort((a, b) => new Date(a.inicio) - new Date(b.inicio))
-                    .map((e, index) => (
-                        <div className="event-card" key={e.id}>
-                            {editandoEventoId === e.id ? (
-                                <>
-                                    <input
-                                        type="text"
-                                        value={eventoEditado.descricao}
-                                        onChange={(ev) => setEventoEditado({ ...eventoEditado, descricao: ev.target.value })}
-                                    />
-                                    <input
-                                        type="datetime-local"
-                                        value={eventoEditado.inicio.substring(0, 16)}
-                                        onChange={(ev) => setEventoEditado({ ...eventoEditado, inicio: ev.target.value })}
-                                    />
-                                    <input
-                                        type="datetime-local"
-                                        value={eventoEditado.termino.substring(0, 16)}
-                                        onChange={(ev) => setEventoEditado({ ...eventoEditado, termino: ev.target.value })}
-                                    />
-                                    <button onClick={() => handleSaveEdit(e.documentId)}>Salvar</button>
-                                    <button className="secondary" onClick={() => setEditandoEventoId(null)}>Cancelar</button>
-                                    <button className="danger" onClick={() => deleteEvento(e.documentId, token, setEventos, setMessage, setEditandoEventoId, userData)}>🗑️ Excluir</button>
-                                    {messages[e.documentId] && <p className="message">{messages[e.documentId]}</p>}
-                                </>
-                            ) : (
-                                <>
-                                    <p className="event-text">
-                                        {index + 1} - {e.descricao} - {formatDate(e.inicio)} até {formatDate(e.termino)}
-                                    </p>
-                                    <button onClick={() => handleEditClick(e)}>Editar</button>
-                                </>
-                            )}
-                        </div>
-                    ))}
+                {Object.keys(eventosAgrupados).map((mes) => (
+                    <div key={mes} className="mes-div">
+                        <h3>{mes[0].toUpperCase() + mes.slice(1)}</h3>
+                        {eventosAgrupados[mes].map((e, index) => (
+                            <div className="event-card" key={e.id}>
+                                {editandoEventoId === e.id ? (
+                                    <>
+                                        <input
+                                            type="text"
+                                            value={eventoEditado.descricao}
+                                            onChange={(ev) => setEventoEditado({ ...eventoEditado, descricao: ev.target.value })}
+                                        />
+                                        <input
+                                            type="datetime-local"
+                                            value={eventoEditado.inicio.substring(0, 16)}
+                                            onChange={(ev) => setEventoEditado({ ...eventoEditado, inicio: ev.target.value })}
+                                        />
+                                        <input
+                                            type="datetime-local"
+                                            value={eventoEditado.termino.substring(0, 16)}
+                                            onChange={(ev) => setEventoEditado({ ...eventoEditado, termino: ev.target.value })}
+                                        />
+                                        <button onClick={() => handleSaveEdit(e.documentId)}>Salvar</button>
+                                        <button className="secondary" onClick={() => setEditandoEventoId(null)}>Cancelar</button>
+                                        <button className="danger" onClick={() => deleteEvento(e.documentId, token, setEventos, setMessage, setEditandoEventoId, userData)}>🗑️ Excluir</button>
+                                        {messages[e.documentId] && <p className="message">{messages[e.documentId]}</p>}
+                                    </>
+                                ) : (
+                                    <>
+                                        <p className="event-text">
+                                            {index + 1} - {e.descricao} - {formatDate(e.inicio)} até {formatDate(e.termino)}
+                                        </p>
+                                        <button onClick={() => handleEditClick(e)}>Editar</button>
+                                    </>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                ))}
             </div>
 
             <div className="section">
@@ -161,6 +165,14 @@ const Container = styled.div`
         border-radius: 8px;
         box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
         margin-bottom: 20px;
+    }
+
+    .mes-div {
+        margin-top: 20px;
+    }
+
+    .mes-div h3 {
+        margin-bottom: 10px;
     }
 
     form {

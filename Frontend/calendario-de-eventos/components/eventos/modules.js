@@ -322,10 +322,25 @@ function formatDate(dateString) {
     });
 }
 
+function agruparEventosPorMes(eventos){
+    return eventos.reduce((acc, evento) => {
+        const dataInicio = new Date(evento.inicio);
+        const mesAno = dataInicio.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+        if (!acc[mesAno]) {
+            acc[mesAno] = [];
+        }
+
+        acc[mesAno].push(evento);
+        return acc;
+    }, {});
+};
+
 module.exports = {
     addEvento,
     editEvento,
     deleteEvento,
     recusarEvento,
-    formatDate
+    formatDate,
+    agruparEventosPorMes
  };
