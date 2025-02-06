@@ -47,7 +47,7 @@ export default function Eventos({ token, userData }) {
             setMessages(prev => ({ ...prev, [id]: erro }));
             return;
         }
-        await editEvento(id, eventoEditado, token, (msg) => {
+        await editEvento(eventos, id, eventoEditado, token, (msg) => {
         }, setEventos);
         setEditandoEventoId(null);
         setMessages({});
@@ -69,7 +69,7 @@ export default function Eventos({ token, userData }) {
                         return;
                     }
 
-                    addEvento(e, token, userData, setMessage, setEventos, setEventosShares, null);
+                    addEvento(eventos, e, token, userData, setMessage, setEventos, setEventosShares, null);
                 }}>
                     <input type="text" name="descricao" placeholder="Descrição do evento" required />
                     <input type="datetime-local" name="inicio" required />
@@ -122,11 +122,21 @@ export default function Eventos({ token, userData }) {
 
             <div className="section">
                 <h2>Eventos Compartilhados Comigo</h2>
-                {eventosShares && eventosShares.data.sort((a, b) => new Date(a.evento.inicio) - new Date(b.evento.inicio)).map((e, index) => (
+                {eventosShares && eventosShares.data.filter(e => e.evento && e.users_ids).sort((a, b) => new Date(a.evento.inicio) - new Date(b.evento.inicio)).map((e, index) => (
                     <div  className="event-card">
                         <p key={e.evento.id}>{index + 1} - {e.evento.descricao} - {formatDate(e.evento.inicio)} até {formatDate(e.evento.termino)}</p>
                         {messages[e.documentId] && <p className="message">{messages[e.documentId]}</p>}
-                        <button onClick={() => {addEvento(null, token, userData, setMessage, setEventos, setEventosShares, e.evento), recusarEvento(e.documentId, token, userData, setEventosShares, setMessages, true)}}>Aceitar</button>
+                        <button onClick={async () => {
+                            try {
+                                const sucesso = await addEvento(eventos, null, token, userData, setMessages, setEventos, setEventosShares, e.evento);
+                            if (sucesso) {
+                                await recusarEvento(e.documentId, token, userData, setEventosShares, setMessages, true);
+                            }
+                            } catch (error) {
+                                console.error("Erro ao adicionar evento:", error);
+                            }
+                        }}>Aceitar</button>
+
                         <button className="danger" onClick={() => recusarEvento(e.documentId, token, userData, setEventosShares, setMessages)}>🗑️ Recusar</button>
                     </div>
                 ))}

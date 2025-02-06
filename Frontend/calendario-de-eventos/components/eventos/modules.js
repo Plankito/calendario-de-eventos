@@ -1,6 +1,26 @@
 
 const API_URL = process.env['NEXT_PUBLIC_API_URL'];
-async function addEvento(event, token, userData, setMessage, setEventos, setEventosShares, evento) {
+
+function verificaConflito(eventos, evento) {
+    if (!eventos || !Array.isArray(eventos.data)) {
+        return null;
+    }
+
+    return eventos.data.find(e => {
+        const inicioExistente = new Date(e.inicio).getTime();
+        const terminoExistente = new Date(e.termino).getTime();
+        const novoInicio = new Date(evento.inicio).getTime();
+        const novoTermino = new Date(evento.termino).getTime();
+
+        return (
+            (novoInicio >= inicioExistente && novoInicio < terminoExistente) ||
+            (novoTermino > inicioExistente && novoTermino <= terminoExistente) ||
+            (novoInicio <= inicioExistente && novoTermino >= terminoExistente)
+        );
+    });
+}
+
+async function addEvento(eventos, event, token, userData, setMessage, setEventos, setEventosShares, evento) {
     setMessage(null);
 
     let jsonData;
@@ -17,6 +37,14 @@ async function addEvento(event, token, userData, setMessage, setEventos, setEven
     }
     jsonData.inicio = new Date(jsonData.inicio).toISOString();
     jsonData.termino = new Date(jsonData.termino).toISOString();
+
+    const conflito = verificaConflito(eventos, jsonData);
+
+    if (conflito) {
+        setMessage(`Conflito com evento "${conflito.descricao}" de ${new Date(conflito.inicio).toLocaleString()} até ${new Date(conflito.termino).toLocaleString()}.`);
+        alert(`Conflito com evento "${conflito.descricao}" de ${new Date(conflito.inicio).toLocaleString()} até ${new Date(conflito.termino).toLocaleString()}.`)
+        return;
+    }
 
     const requestBody = {
         data: {
@@ -139,7 +167,7 @@ async function compartilharEvento(documentId, userData, userIds, token, setMessa
     }
 }
 
-async function editEvento(documentId, eventoEditado, token, setMessage, setEventos) {
+async function editEvento(eventos, documentId, eventoEditado, token, setMessage, setEventos) {
     setMessage(null);
 
     const reqOptions = {
@@ -150,6 +178,15 @@ async function editEvento(documentId, eventoEditado, token, setMessage, setEvent
         },
         body: JSON.stringify({ data: eventoEditado })
     };
+
+    const conflito = verificaConflito(eventos, eventoEditado);
+
+    if (conflito) {
+        setMessage(`Conflito com evento "${conflito.descricao}" de ${new Date(conflito.inicio).toLocaleString()} até ${new Date(conflito.termino).toLocaleString()}.`);
+        alert(`Conflito com evento "${conflito.descricao}" de ${new Date(conflito.inicio).toLocaleString()} até ${new Date(conflito.termino).toLocaleString()}.`)
+        return;
+    }
+
 
     try {
         const req = await fetch(`${API_URL}/api/eventos/${documentId}`, reqOptions);
