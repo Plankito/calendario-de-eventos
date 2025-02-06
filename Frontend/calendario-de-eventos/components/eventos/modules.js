@@ -1,12 +1,18 @@
 
 const API_URL = process.env['NEXT_PUBLIC_API_URL'];
 
-function verificaConflito(eventos, evento) {
+function verificaConflito(eventos, evento, documentId) {
     if (!eventos || !Array.isArray(eventos.data)) {
         return null;
     }
 
     return eventos.data.find(e => {
+        if (documentId){
+            if (e.documentId === documentId) {
+                return false;
+            }
+        }
+
         const inicioExistente = new Date(e.inicio).getTime();
         const terminoExistente = new Date(e.termino).getTime();
         const novoInicio = new Date(evento.inicio).getTime();
@@ -116,6 +122,7 @@ async function addEvento(eventos, event, token, userData, setMessage, setEventos
         if (userIds.length > 0) {
             compartilharEvento(res.data.documentId, userData, userIds, token, setMessage, setEventosShares);
         }
+        return res?.data;
 
     } catch (error) {
         console.error('Erro:', error);
@@ -179,7 +186,7 @@ async function editEvento(eventos, documentId, eventoEditado, token, setMessage,
         body: JSON.stringify({ data: eventoEditado })
     };
 
-    const conflito = verificaConflito(eventos, eventoEditado);
+    const conflito = verificaConflito(eventos, eventoEditado, documentId);
 
     if (conflito) {
         setMessage(`Conflito com evento "${conflito.descricao}" de ${new Date(conflito.inicio).toLocaleString()} até ${new Date(conflito.termino).toLocaleString()}.`);

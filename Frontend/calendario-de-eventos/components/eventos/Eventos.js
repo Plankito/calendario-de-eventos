@@ -29,6 +29,10 @@ export default function Eventos({ token, userData }) {
         if (new Date(inicio) >= new Date(termino)) {
             return "A data de início deve ser antes da data de término.";
         }
+        const agora = new Date().getTime();
+        if (new Date(inicio) < agora || new Date(termino) < agora) {
+            return "Não é possível adicionar eventos no passado!" ;
+        }
         return null;
     };
 
@@ -125,7 +129,6 @@ export default function Eventos({ token, userData }) {
                 {eventosShares && eventosShares.data.filter(e => e.evento && e.users_ids).sort((a, b) => new Date(a.evento.inicio) - new Date(b.evento.inicio)).map((e, index) => (
                     <div  className="event-card">
                         <p key={e.evento.id}>{index + 1} - {e.evento.descricao} - {formatDate(e.evento.inicio)} até {formatDate(e.evento.termino)}</p>
-                        {messages[e.documentId] && <p className="message">{messages[e.documentId]}</p>}
                         <button onClick={async () => {
                             try {
                                 const sucesso = await addEvento(eventos, null, token, userData, setMessages, setEventos, setEventosShares, e.evento);
