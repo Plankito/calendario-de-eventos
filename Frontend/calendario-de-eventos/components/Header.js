@@ -18,7 +18,7 @@ export default function Header(){
                 </a>
                 <nav>
                     <ul>
-                        <li><Link href="#" onClick={handleLogout}><i class="fa fa-sign-out" aria-hidden="true"></i></Link></li>
+                        <li><Link href="#" onClick={handleLogout}><i className="fa fa-sign-out" aria-hidden="true"></i></Link></li>
                     </ul>
                 </nav>
                 {/* <p>Projeto TokenLab</p> */}
