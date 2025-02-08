@@ -4,6 +4,7 @@ import returnUserEvents from './returnUserEvents'
 
 const { addEvento, editEvento, deleteEvento, recusarEvento, formatDate, agruparEventosPorMes } = require('../eventos/modules');
 
+
 export default function Eventos({ token, userData }) {
     const [eventos, setEventos] = useState(null);
     const [eventosShares, setEventosShares] = useState(null);
@@ -24,6 +25,59 @@ export default function Eventos({ token, userData }) {
             return () => clearTimeout(timer);
         }
     }, [token, userData, message]);
+
+    useEffect(() => {
+        // Refresh de "Eventos Compartilhados Comigo"
+        if (token && userData?.id) {
+            const interval = setInterval(async () => {
+                try {
+                    const novosEventosShares = await returnUserEvents({
+                        token,
+                        setFunction: false,
+                        route: `eventos-shares/?filters[users_ids][$eq]=${userData.id}&populate=*`
+                    });
+    
+                    if (!novosEventosShares?.data) {
+                        return;
+                    }
+    
+                    let eventosAlterados = false;
+    
+                    novosEventosShares?.data.forEach((e) => {
+                        const eventoAnterior = eventosShares?.data.find((evento) => evento.id === e.id);
+    
+                        if (!eventoAnterior) {
+                            console.log(`Evento adicionado: ${e.id}`);
+                            eventosAlterados = true;
+                        } 
+                        else if (eventoAnterior.updatedAt !== e.updatedAt || eventoAnterior.evento !== e.evento) {
+                            console.log(`Evento alterado: ${e.id}`);
+                            eventosAlterados = true;
+                        }
+                    });
+    
+                    eventosShares?.data.forEach((eventoAnterior) => {
+                        const eventoAtual = novosEventosShares?.data.find((e) => e.id === eventoAnterior.id);
+    
+                        if (!eventoAtual) {
+                            console.log(`Evento removido: ${eventoAnterior.id}`);
+                            eventosAlterados = true;
+                        }
+                    });
+    
+                    if (eventosAlterados) {
+                        console.log('Eventos alterados (adicionados, removidos ou alterados):', novosEventosShares.data);
+                        setEventosShares(novosEventosShares);
+                    }
+                } catch (error) {
+                    console.log('Erro ao buscar eventos:', error.message);
+                }
+            }, 5000);
+    
+            return () => clearInterval(interval);
+        }
+    }, [token, userData, eventosShares]);
+    
 
     const validarDatas = (inicio, termino) => {
         if (new Date(inicio) >= new Date(termino)) {

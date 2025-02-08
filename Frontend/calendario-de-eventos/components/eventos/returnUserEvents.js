@@ -18,6 +18,7 @@ export default async function returnUserEvents({token, setFunction, route}){
         const res = await req.json();
         if (setFunction){
             setFunction(res);}
+        return res;
     } catch (error) {
         console.log(error.message);
     }
