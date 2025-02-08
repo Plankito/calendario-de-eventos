@@ -1,13 +1,19 @@
+import { useEffect, useState } from "react";
 import styled from '@emotion/styled'
-import { useRouter } from 'next/router';
 import Link from 'next/link'
+import returnUserJwt from './user/returnUserJwt';
 
 export default function Header(){
-    const router = useRouter();
+    const [userJwt, setUserJwt] = useState(null);
+
+    useEffect(() => {
+        const token = returnUserJwt();
+        setUserJwt(token);
+    }, []);
 
     const handleLogout = () => {
         document.cookie = "jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        router.push('/login');
+        setUserJwt(null);
     };
     return(
         <Container>
@@ -16,11 +22,17 @@ export default function Header(){
                     <img src="https://www.tokenlab.com.br/assets/icons/common/token-logo-dark.svg" alt="Tokenlab Logo" />
                     <h3>Events</h3>
                 </a>
-                <nav>
-                    <ul>
-                        <li><Link href="#" onClick={handleLogout}><i className="fa fa-sign-out" aria-hidden="true"></i></Link></li>
-                    </ul>
-                </nav>
+                {userJwt && (
+                    <nav>
+                        <ul>
+                            <li>
+                                <Link href="/login" onClick={handleLogout} aria-label="Sair">
+                                    <i className="fa fa-sign-out" aria-hidden="true"></i>
+                                </Link>
+                            </li>
+                        </ul>
+                    </nav>
+                )}
                 {/* <p>Projeto TokenLab</p> */}
             </div>
         </Container>
