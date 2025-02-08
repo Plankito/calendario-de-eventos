@@ -8,7 +8,9 @@ export default function Header(){
 
     useEffect(() => {
         const token = returnUserJwt();
-        setUserJwt(token);
+        if (token !== " "){
+            setUserJwt(token);
+        }
     }, []);
 
     const handleLogout = () => {
