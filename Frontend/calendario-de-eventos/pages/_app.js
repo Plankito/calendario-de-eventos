@@ -13,9 +13,9 @@ function MyApp({ Component, pageProps}){
 
   useEffect(() => {
       const fetchData = async () => {
-          await returnUserData(userJwt, setUsersData, null);
           if (userJwt !== " ") {
-          await returnUserData(userJwt, setUserData, setLoading, "/me/");
+            await returnUserData(userJwt, setUsersData, null);
+            await returnUserData(userJwt, setUserData, setLoading, "/me/");
           }
       };
       if (userJwt) {
