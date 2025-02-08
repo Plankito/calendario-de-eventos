@@ -111,7 +111,7 @@ export default function Eventos({ token, userData }) {
                                         />
                                         <button onClick={() => handleSaveEdit(e.documentId)}>Salvar</button>
                                         <button className="secondary" onClick={() => setEditandoEventoId(null)}>Cancelar</button>
-                                        <button className="danger" onClick={() => deleteEvento(e.documentId, token, setEventos, setMessage, setEditandoEventoId, userData)}>🗑️ Excluir</button>
+                                        <button className="danger" onClick={() => deleteEvento(e.documentId, token, setEventos, setMessage, setEditandoEventoId, userData, eventosShares)}>🗑️ Excluir</button>
                                         {messages[e.documentId] && <p className="message">{messages[e.documentId]}</p>}
                                     </>
                                 ) : (
@@ -132,7 +132,6 @@ export default function Eventos({ token, userData }) {
                 <h2>Eventos Compartilhados Comigo</h2>
                 {eventosShares && eventosShares.data.filter(e => e.evento && e.users_ids).sort((a, b) => new Date(a.evento.inicio) - new Date(b.evento.inicio)).map((e, index) => (
                     <div  className="event-card">
-                        {console.log(eventosShares)}
                         <p key={e.evento.id}>{index + 1} - {e.evento.descricao} - {formatDate(e.evento.inicio)} até {formatDate(e.evento.termino)}</p>
                         <button onClick={async () => {
                             try {

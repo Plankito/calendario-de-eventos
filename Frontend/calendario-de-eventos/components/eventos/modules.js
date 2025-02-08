@@ -215,14 +215,14 @@ async function editEvento(eventos, documentId, eventoEditado, token, setMessage,
 }
 
 
-async function deleteEvento(documentId, token, setEventos, setMessage, setEditandoEventoId, userData) {
+async function deleteEvento(documentId, token, setEventos, setMessage, setEditandoEventoId, userData, eventosShares) {
     if (!documentId) return;
-    
+
     const confirmDelete = window.confirm("Tem certeza que deseja excluir este evento?");
     if (!confirmDelete) return;
 
     try {
-        const response = await fetch(`http://localhost:1337/api/eventos/${documentId}`, {
+        const response = await fetch(`${API_URL}/api/eventos/${documentId}`, {
             method: "DELETE",
             headers: {
                 "Authorization": `Bearer ${token}`,
@@ -233,8 +233,30 @@ async function deleteEvento(documentId, token, setEventos, setMessage, setEditan
         if (!response.ok) throw new Error("Erro ao excluir evento");
 
         setMessage("Evento excluído com sucesso!");
-        setEditandoEventoId(null)
-        
+        setEditandoEventoId(null);
+
+        if (eventosShares) {
+            console.log(eventosShares.data);
+            const deleteRequests = eventosShares.data
+                .filter(e => e.evento === null)
+                .map(e =>
+                    fetch(`${API_URL}/api/eventos-shares/${e.documentId}`, {
+                        method: "DELETE",
+                        headers: {
+                            "Authorization": `Bearer ${token}`,
+                            "Content-Type": "application/json",
+                        },
+                    })
+                );
+
+            const deleteResponses = await Promise.all(deleteRequests);
+
+            const failedDeletes = deleteResponses.filter(res => !res.ok);
+            if (failedDeletes.length > 0) {
+                setMessage("Erro ao excluir alguns eventos compartilhados.");
+            }
+        }
+
         const updatedEventosReq = await fetch(`${API_URL}/api/eventos/?filters[user_id][$eq]=${userData.id}`, {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -245,9 +267,10 @@ async function deleteEvento(documentId, token, setEventos, setMessage, setEditan
         setEventos(updatedEventos);
         
     } catch (error) {
-        setMessage("Erro ao excluir o evento");
+        setMessage("Erro ao excluir o evento.");
     }
 }
+
 
 async function recusarEvento(documentId, token, userData, setEventosShares, setMessages, pular){
     if (!documentId) return;
