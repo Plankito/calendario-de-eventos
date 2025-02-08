@@ -132,6 +132,7 @@ export default function Eventos({ token, userData }) {
                 <h2>Eventos Compartilhados Comigo</h2>
                 {eventosShares && eventosShares.data.filter(e => e.evento && e.users_ids).sort((a, b) => new Date(a.evento.inicio) - new Date(b.evento.inicio)).map((e, index) => (
                     <div  className="event-card">
+                        {console.log(eventosShares)}
                         <p key={e.evento.id}>{index + 1} - {e.evento.descricao} - {formatDate(e.evento.inicio)} até {formatDate(e.evento.termino)}</p>
                         <button onClick={async () => {
                             try {

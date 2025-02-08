@@ -132,8 +132,6 @@ async function addEvento(eventos, event, token, userData, setMessage, setEventos
 
 
 async function compartilharEvento(documentId, userData, userIds, token, setMessage, setEventosShares) {
-    console.log("Compartilhando evento:", documentId, "com usuários:", userIds);
-
     const requestBody = {
         data: {
             evento: documentId,
@@ -290,10 +288,20 @@ async function recusarEvento(documentId, token, userData, setEventosShares, setM
             body: JSON.stringify(requestBody)
         });
 
-        if (!response.ok) throw new Error("Erro ao recusar revento");
+        if (!response.ok) throw new Error("Erro ao recusar evento");
 
         setMessages("Evento recusado com sucesso!");
-        
+
+        if (users_ids_atualizado.length === 0){
+            const response = await fetch(`${API_URL}/api/eventos-shares/${documentId}`,{
+                method: "DELETE",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+            if (!response.ok) throw new Error("Erro ao deletar evento");
+        }
         const updatedEventosReqSec = await fetch(`${API_URL}/api/eventos-shares/?filters[users_ids][$eq]=${userData.id}&populate=*`, {
             headers: {
                 'Authorization': `Bearer ${token}`
