@@ -236,7 +236,6 @@ async function deleteEvento(documentId, token, setEventos, setMessage, setEditan
         setEditandoEventoId(null);
 
         if (eventosShares) {
-            console.log(eventosShares.data);
             const deleteRequests = eventosShares.data
                 .filter(e => e.evento === null)
                 .map(e =>
