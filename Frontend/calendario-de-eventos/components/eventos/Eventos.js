@@ -121,7 +121,13 @@ export default function Eventos({ token, userData }) {
     const eventosAgrupados = eventos ? agruparEventosPorMes(eventos.data) : {};
     const eventosFiltrados = eventosAgrupados 
     ? Object.keys(eventosAgrupados).reduce((acc, mes) => {
-        acc[mes] = eventosAgrupados[mes].filter(e => e.descricao.toLowerCase().includes(searchTerm));
+        
+        const eventosFiltradosNoMes = eventosAgrupados[mes].filter(e => e.descricao.toLowerCase().includes(searchTerm));
+
+        if (eventosFiltradosNoMes.length > 0) {
+            acc[mes] = eventosFiltradosNoMes;
+        }
+
         return acc;
     }, {}) 
     : {};
@@ -157,61 +163,61 @@ export default function Eventos({ token, userData }) {
             </div>
 
             <div className="section">
+                <h2>Buscar Eventos</h2>
+                <input type="text" placeholder="Digite para buscar eventos..." value={searchTerm} onChange={handleSearchChange} />
                 <h2>Meus Eventos</h2>
-                <div className="section">
-                    <h2>Buscar Eventos</h2>
-                        <input type="text" placeholder="Digite para buscar eventos..." value={searchTerm} onChange={handleSearchChange} />
-                    </div>
-                    {Object.keys(eventosFiltrados).map((mes) => (
-                    <div key={mes} className="mes-div">
-                        <h3>{mes[0].toUpperCase() + mes.slice(1)}</h3>
-                        {eventosFiltrados[mes].map((e, index) => (
-                            <div className="event-card" key={e.id}>
-                                {editandoEventoId === e.id ? (
-                                    <>
-                                        <input
-                                            type="text"
-                                            value={eventoEditado.descricao}
-                                            onChange={(ev) => setEventoEditado({ ...eventoEditado, descricao: ev.target.value })}
-                                        />
-                                        <input
-                                            type="datetime-local"
-                                            value={eventoEditado.inicio.substring(0, 16)}
-                                            onChange={(ev) => setEventoEditado({ ...eventoEditado, inicio: ev.target.value })}
-                                        />
-                                        <input
-                                            type="datetime-local"
-                                            value={eventoEditado.termino.substring(0, 16)}
-                                            onChange={(ev) => setEventoEditado({ ...eventoEditado, termino: ev.target.value })}
-                                        />
-                                        <button onClick={() => handleSaveEdit(e.documentId)}>Salvar</button>
-                                        <button className="secondary" onClick={() => setEditandoEventoId(null)}>Cancelar</button>
-                                        <button className="danger" onClick={() => deleteEvento(e.documentId, token, setEventos, setMessage, setEditandoEventoId, userData, eventosShares)}>🗑️ Excluir</button>
+                
+                {Object.keys(eventosFiltrados).map((mes) => (
+                <div key={mes} className="mes-div">
+                    <h3>{mes[0].toUpperCase() + mes.slice(1)}</h3>
+                    {console.log(eventosFiltrados)}
+                    {eventosFiltrados[mes].map((e, index) => (
+                        <div className="event-card" key={e.id}>
+                            {editandoEventoId === e.id ? (
+                                <>
+                                    <input
+                                        type="text"
+                                        value={eventoEditado.descricao}
+                                        onChange={(ev) => setEventoEditado({ ...eventoEditado, descricao: ev.target.value })}
+                                    />
+                                    <input
+                                        type="datetime-local"
+                                        value={eventoEditado.inicio.substring(0, 16)}
+                                        onChange={(ev) => setEventoEditado({ ...eventoEditado, inicio: ev.target.value })}
+                                    />
+                                    <input
+                                        type="datetime-local"
+                                        value={eventoEditado.termino.substring(0, 16)}
+                                        onChange={(ev) => setEventoEditado({ ...eventoEditado, termino: ev.target.value })}
+                                    />
+                                    <button onClick={() => handleSaveEdit(e.documentId)}>Salvar</button>
+                                    <button className="secondary" onClick={() => setEditandoEventoId(null)}>Cancelar</button>
+                                    <button className="danger" onClick={() => deleteEvento(e.documentId, token, setEventos, setMessage, setEditandoEventoId, userData, eventosShares)}>🗑️ Excluir</button>
 
-                                        {messages.error?.[e.documentId] && (
-                                            <p className="message error">
-                                                Erro no evento {e.documentId}: {messages.error[e.documentId]}
-                                            </p>
-                                        )}
-
-                                        {messages.exito?.[e.documentId] && (
-                                            <p className="message success">
-                                                Evento {e.documentId}: {messages.exito[e.documentId]}
-                                            </p>
-                                        )}
-                                    </>
-                                ) : (
-                                    <>
-                                        <p className="event-text">
-                                            {index + 1} - {e.descricao} - {formatDate(e.inicio)} até {formatDate(e.termino)}
+                                    {messages.error?.[e.documentId] && (
+                                        <p className="message error">
+                                            Erro no evento {e.documentId}: {messages.error[e.documentId]}
                                         </p>
-                                        <button onClick={() => handleEditClick(e)}>Editar</button>
-                                    </>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                ))}
+                                    )}
+
+                                    {messages.exito?.[e.documentId] && (
+                                        <p className="message success">
+                                            Evento {e.documentId}: {messages.exito[e.documentId]}
+                                        </p>
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    <p className="event-text">
+                                        {index + 1} - {e.descricao} - {formatDate(e.inicio)} até {formatDate(e.termino)}
+                                    </p>
+                                    <button onClick={() => handleEditClick(e)}>Editar</button>
+                                </>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            ))}
             </div>
 
             <div className="section">
