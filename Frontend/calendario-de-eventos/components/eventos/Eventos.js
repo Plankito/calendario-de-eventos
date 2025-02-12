@@ -121,7 +121,7 @@ export default function Eventos({ token, userData }) {
     const eventosAgrupados = eventos ? agruparEventosPorMes(eventos.data) : {};
     const eventosFiltrados = eventosAgrupados 
     ? Object.keys(eventosAgrupados).reduce((acc, mes) => {
-        
+
         const eventosFiltradosNoMes = eventosAgrupados[mes].filter(e => e.descricao.toLowerCase().includes(searchTerm));
 
         if (eventosFiltradosNoMes.length > 0) {
@@ -140,10 +140,15 @@ export default function Eventos({ token, userData }) {
                     const formData = new FormData(e.target);
                     const inicio = formData.get("inicio");
                     const termino = formData.get("termino");
+                    const compartilhar = formData.get("compartilhar");
 
                     const erro = validarDatas(inicio, termino);
                     if (erro) {
                         setMessage(erro);
+                        return;
+                    }
+                    if (compartilhar && (!compartilhar.includes('@') || !compartilhar.includes('.'))) {
+                        setMessage({error: 'Email não identificado, compartilhe através do email do usuário'});
                         return;
                     }
 
@@ -152,7 +157,7 @@ export default function Eventos({ token, userData }) {
                     <input type="text" name="descricao" placeholder="Descrição do evento" required />
                     <input type="datetime-local" name="inicio" required />
                     <input type="datetime-local" name="termino" required />
-                    <input type="text" name="compartilhar" placeholder="(Opcional) Compartilhar com... (Use ' ; ' para adicionar mais de um usuário)"/>
+                    <input type="text" name="compartilhar" placeholder="(Opcional - Email) Compartilhar com... (Use ' ; ' para adicionar mais de um email)"/>
                     <button type="submit">Criar Evento</button>
                 </form>
                 {message && Object.entries(message).map(([key, text]) => (

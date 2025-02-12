@@ -79,12 +79,16 @@ async function addEvento(eventos, event, token, userData, setMessage, setEventos
         let userIds = [];
 
         if (jsonData.compartilhar) {
-            const usernames = jsonData.compartilhar.includes(";")
+            const emails = jsonData.compartilhar.includes(";")
                 ? jsonData.compartilhar.split(";").map(name => name.trim())
                 : [jsonData.compartilhar.trim()];
 
-            for (const username of usernames) {
-                const reqSec = await fetch(`${API_URL}/api/users/?filters[username][$eq]=${username}`, {
+            for (const email of emails) {
+                if (email === userData.email) {
+                    setMessage({error: "Você não pode compartilhar com você mesmo!"});
+                    return;
+                }
+                const reqSec = await fetch(`${API_URL}/api/users/?filters[email][$eq]=${email}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -94,7 +98,7 @@ async function addEvento(eventos, event, token, userData, setMessage, setEventos
 
                 const resSec = await reqSec.json();
                 if (resSec.length === 0) {
-                    setMessage({error: `Usuário "${username}" não encontrado!`});
+                    setMessage({error: `Usuário de E-mail: "${email}" não encontrado!`});
                     return;
                 }
 
