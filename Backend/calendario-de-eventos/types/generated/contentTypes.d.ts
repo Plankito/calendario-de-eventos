@@ -393,6 +393,10 @@ export interface ApiEventoEvento extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
+    shared_users_id: Schema.Attribute.Relation<
+      'oneToMany',
+      'plugin::users-permissions.user'
+    >;
     termino: Schema.Attribute.DateTime & Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -907,6 +911,7 @@ export interface PluginUsersPermissionsUser
       Schema.Attribute.SetMinMaxLength<{
         minLength: 6;
       }>;
+    evento_shared: Schema.Attribute.Relation<'manyToOne', 'api::evento.evento'>;
     eventos_shares: Schema.Attribute.Relation<
       'manyToMany',
       'api::eventos-share.eventos-share'

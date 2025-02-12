@@ -70,6 +70,12 @@
       "relation": "manyToMany",
       "target": "api::eventos-share.eventos-share",
       "mappedBy": "users_ids"
+    },
+    "evento_shared": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::evento.evento",
+      "inversedBy": "shared_users_id"
     }
   }
 }
