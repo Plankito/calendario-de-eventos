@@ -18,7 +18,12 @@ export default function Register({ route }) {
       setMessage({ message: 'Todos os campos são obrigatórios' });
       return;
     }
-
+    
+    if (jsonData.password !== jsonData.confirmPassword) {
+      setMessage({ message: 'As senhas não coincidem' });
+      return;
+    }
+    delete jsonData.confirmPassword;
     try {
       const req = await fetch(`${API_URL}/api/auth/local/register`, {
         method: 'POST',
@@ -67,6 +72,9 @@ export default function Register({ route }) {
 
         <label htmlFor="password">Senha</label>
         <input type="password" id="password" name="password" required />
+
+        <label htmlFor="confirmPassword">Repita sua senha</label>
+        <input type="password" id="confirmPassword" name="confirmPassword" required />
 
         <button type="submit">Registrar</button>
 
