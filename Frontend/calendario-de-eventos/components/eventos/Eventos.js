@@ -12,6 +12,7 @@ export default function Eventos({ token, userData }) {
     const [messages, setMessages] = useState({});
     const [editandoEventoId, setEditandoEventoId] = useState(null);
     const [eventoEditado, setEventoEditado] = useState({});
+    const [searchTerm, setSearchTerm] = useState("");
 
     useEffect(() => {
         if (token && userData?.id) {
@@ -102,16 +103,28 @@ export default function Eventos({ token, userData }) {
     const handleSaveEdit = async (id) => {
         const erro = validarDatas(eventoEditado.inicio, eventoEditado.termino);
         if (erro) {
-            setMessages(prev => ({ ...prev, [id]: erro }));
+            setMessages(prev => ({...prev,error: {...prev.error,[id]: erro}
+            }));
             return;
         }
         await editEvento(eventos, id, eventoEditado, token, (msg) => {
+            setMessages(prev => ({...prev,exito: {...prev.exito,[id]: msg}
+            }));
         }, setEventos);
         setEditandoEventoId(null);
         setMessages({});
     };
-    const eventosAgrupados = eventos ? agruparEventosPorMes(eventos.data) : {};
 
+    const handleSearchChange = (e) => {
+        setSearchTerm(e.target.value.toLowerCase());
+    };
+    const eventosAgrupados = eventos ? agruparEventosPorMes(eventos.data) : {};
+    const eventosFiltrados = eventosAgrupados 
+    ? Object.keys(eventosAgrupados).reduce((acc, mes) => {
+        acc[mes] = eventosAgrupados[mes].filter(e => e.descricao.toLowerCase().includes(searchTerm));
+        return acc;
+    }, {}) 
+    : {};
     return (
         <Container>
             <div className="section">
@@ -136,15 +149,23 @@ export default function Eventos({ token, userData }) {
                     <input type="text" name="compartilhar" placeholder="(Opcional) Compartilhar com... (Use ' ; ' para adicionar mais de um usuário)"/>
                     <button type="submit">Criar Evento</button>
                 </form>
-                {message && <p className="message">{message}</p>}
+                {message && Object.entries(message).map(([key, text]) => (
+                    <p key={key} className={`message ${key === "exito" ? "success" : "error"}`}>
+                        {text}
+                    </p>
+                    ))}
             </div>
 
             <div className="section">
                 <h2>Meus Eventos</h2>
-                {Object.keys(eventosAgrupados).map((mes) => (
+                <div className="section">
+                    <h2>Buscar Eventos</h2>
+                        <input type="text" placeholder="Digite para buscar eventos..." value={searchTerm} onChange={handleSearchChange} />
+                    </div>
+                    {Object.keys(eventosFiltrados).map((mes) => (
                     <div key={mes} className="mes-div">
                         <h3>{mes[0].toUpperCase() + mes.slice(1)}</h3>
-                        {eventosAgrupados[mes].map((e, index) => (
+                        {eventosFiltrados[mes].map((e, index) => (
                             <div className="event-card" key={e.id}>
                                 {editandoEventoId === e.id ? (
                                     <>
@@ -166,7 +187,18 @@ export default function Eventos({ token, userData }) {
                                         <button onClick={() => handleSaveEdit(e.documentId)}>Salvar</button>
                                         <button className="secondary" onClick={() => setEditandoEventoId(null)}>Cancelar</button>
                                         <button className="danger" onClick={() => deleteEvento(e.documentId, token, setEventos, setMessage, setEditandoEventoId, userData, eventosShares)}>🗑️ Excluir</button>
-                                        {messages[e.documentId] && <p className="message">{messages[e.documentId]}</p>}
+
+                                        {messages.error?.[e.documentId] && (
+                                            <p className="message error">
+                                                Erro no evento {e.documentId}: {messages.error[e.documentId]}
+                                            </p>
+                                        )}
+
+                                        {messages.exito?.[e.documentId] && (
+                                            <p className="message success">
+                                                Evento {e.documentId}: {messages.exito[e.documentId]}
+                                            </p>
+                                        )}
                                     </>
                                 ) : (
                                     <>
@@ -279,10 +311,21 @@ const Container = styled.div`
     }
 
     .message {
-        color: #dc3545;
+        padding: 10px;
+        border-radius: 5px;
         font-weight: bold;
-        margin-top: 10px;
     }
+    .success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    .error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
 
     .event-card {
         background: #fff;

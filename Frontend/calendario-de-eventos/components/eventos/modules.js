@@ -25,6 +25,11 @@ function verificaConflito(eventos, evento, documentId) {
         );
     });
 }
+function converterParaUTC(dateString) {
+    const dataLocal = new Date(dateString);
+    const dataUC = new Date(dataLocal.getTime() - dataLocal.getTimezoneOffset() * 60000);
+    return dataUC.toISOString();
+}
 
 async function addEvento(eventos, event, token, userData, setMessage, setEventos, setEventosShares, evento) {
     setMessage(null);
@@ -38,16 +43,16 @@ async function addEvento(eventos, event, token, userData, setMessage, setEventos
     } else if (evento) {
         jsonData = { ...evento };
     } else {
-        setMessage("Nenhum dado de evento fornecido!");
+        setMessage({error: "Nenhum dado de evento fornecido!"});
         return;
     }
-    jsonData.inicio = new Date(jsonData.inicio).toISOString();
-    jsonData.termino = new Date(jsonData.termino).toISOString();
+    jsonData.inicio = converterParaUTC(jsonData.inicio);
+    jsonData.termino = converterParaUTC(jsonData.termino);
 
     const conflito = verificaConflito(eventos, jsonData);
 
     if (conflito) {
-        setMessage(`Conflito com evento "${conflito.descricao}" de ${new Date(conflito.inicio).toLocaleString()} até ${new Date(conflito.termino).toLocaleString()}.`);
+        setMessage({error: `Conflito com evento "${conflito.descricao}" de ${new Date(conflito.inicio).toLocaleString()} até ${new Date(conflito.termino).toLocaleString()}.`});
         alert(`Conflito com evento "${conflito.descricao}" de ${new Date(conflito.inicio).toLocaleString()} até ${new Date(conflito.termino).toLocaleString()}.`)
         return;
     }
@@ -89,7 +94,7 @@ async function addEvento(eventos, event, token, userData, setMessage, setEventos
 
                 const resSec = await reqSec.json();
                 if (resSec.length === 0) {
-                    setMessage(`Usuário "${username}" não encontrado!`);
+                    setMessage({error: `Usuário "${username}" não encontrado!`});
                     return;
                 }
 
@@ -101,11 +106,11 @@ async function addEvento(eventos, event, token, userData, setMessage, setEventos
         const res = await req.json();
 
         if (res.error) {
-            setMessage(res.error.message || "Erro ao criar evento!");
+            setMessage({error: res.error.message} || {error: "Erro ao criar evento!"});
             return;
         }
 
-        setMessage("Evento criado com sucesso!");
+        setMessage({exito: "Evento criado com sucesso!"});
 
         if (event) {
             event.target.reset();
@@ -126,7 +131,7 @@ async function addEvento(eventos, event, token, userData, setMessage, setEventos
 
     } catch (error) {
         console.error('Erro:', error);
-        setMessage("Erro ao criar evento!");
+        setMessage({error: "Erro ao criar evento!"});
     }
 }
 
@@ -153,7 +158,7 @@ async function compartilharEvento(documentId, userData, userIds, token, setMessa
         const data = await response.json();
 
         if (response.ok) {
-            setMessage("Evento compartilhado com sucesso!");
+            setMessage({exito: "Evento compartilhado com sucesso!"});
 
             const updatedSharesReq = await fetch(`${API_URL}/api/eventos-shares/?filters[users_ids][$eq]=${userData.id}&populate=*`, {
                 headers: {
@@ -164,11 +169,11 @@ async function compartilharEvento(documentId, userData, userIds, token, setMessa
 
             setEventosShares(updatedShares);
         } else {
-            setMessage(data.error?.message || "Erro ao compartilhar o evento!");
+            setMessage({error: data.error?.message} || {error: "Erro ao compartilhar o evento!"});
         }
     } catch (error) {
         console.error("Erro ao compartilhar evento:", error);
-        setMessage("Erro ao compartilhar evento!");
+        setMessage({error: "Erro ao compartilhar evento!"});
     }
 }
 
@@ -187,7 +192,7 @@ async function editEvento(eventos, documentId, eventoEditado, token, setMessage,
     const conflito = verificaConflito(eventos, eventoEditado, documentId);
 
     if (conflito) {
-        setMessage(`Conflito com evento "${conflito.descricao}" de ${new Date(conflito.inicio).toLocaleString()} até ${new Date(conflito.termino).toLocaleString()}.`);
+        setMessage({error: `Conflito com evento "${conflito.descricao}" de ${new Date(conflito.inicio).toLocaleString()} até ${new Date(conflito.termino).toLocaleString()}.`});
         alert(`Conflito com evento "${conflito.descricao}" de ${new Date(conflito.inicio).toLocaleString()} até ${new Date(conflito.termino).toLocaleString()}.`)
         return;
     }
@@ -198,7 +203,7 @@ async function editEvento(eventos, documentId, eventoEditado, token, setMessage,
         const res = await req.json();
 
         if (res.error) {
-            setMessage(res.error.message);
+            setMessage({error: res.error.message});
             return;
         }
 
@@ -207,10 +212,10 @@ async function editEvento(eventos, documentId, eventoEditado, token, setMessage,
             data: prev.data.map(evento => evento.documentId === documentId ? res.data : evento)
         }));
 
-        setMessage("Evento atualizado com sucesso!");
+        setMessage({exito: "Evento atualizado com sucesso!"});
     } catch (error) {
         console.error('Erro ao editar evento:', error);
-        setMessage("Erro ao editar evento.");
+        setMessage({error: "Erro ao editar evento."});
     }
 }
 
@@ -232,7 +237,7 @@ async function deleteEvento(documentId, token, setEventos, setMessage, setEditan
 
         if (!response.ok) throw new Error("Erro ao excluir evento");
 
-        setMessage("Evento excluído com sucesso!");
+        setMessage({exito: "Evento excluído com sucesso!"});
         setEditandoEventoId(null);
 
         if (eventosShares) {
@@ -252,7 +257,7 @@ async function deleteEvento(documentId, token, setEventos, setMessage, setEditan
 
             const failedDeletes = deleteResponses.filter(res => !res.ok);
             if (failedDeletes.length > 0) {
-                setMessage("Erro ao excluir alguns eventos compartilhados.");
+                setMessage({error: "Erro ao excluir alguns eventos compartilhados."});
             }
         }
 
@@ -266,7 +271,7 @@ async function deleteEvento(documentId, token, setEventos, setMessage, setEditan
         setEventos(updatedEventos);
         
     } catch (error) {
-        setMessage("Erro ao excluir o evento.");
+        setMessage({error: "Erro ao excluir o evento."});
     }
 }
 
@@ -312,7 +317,7 @@ async function recusarEvento(documentId, token, userData, setEventosShares, setM
 
         if (!response.ok) throw new Error("Erro ao recusar evento");
 
-        setMessages("Evento recusado com sucesso!");
+        setMessages({exito: "Evento recusado com sucesso!"});
 
         if (users_ids_atualizado.length === 0){
             const response = await fetch(`${API_URL}/api/eventos-shares/${documentId}`,{
@@ -333,7 +338,7 @@ async function recusarEvento(documentId, token, userData, setEventosShares, setM
         setEventosShares(updatedEventos);
         
     } catch (error) {
-        setMessages("Erro ao recusar o evento");
+        setMessages({error: "Erro ao recusar o evento"});
     }
 
 }
@@ -342,8 +347,8 @@ function formatDate(dateString) {
     if (!dateString) return "Data inválida";
 
     const date = new Date(dateString);
+    date.setHours(date.getHours() + 3);
     return date.toLocaleString("pt-BR", {
-        timeZone: "America/Sao_Paulo",
         day: "2-digit",
         month: "2-digit",
         year: "numeric",
@@ -351,6 +356,7 @@ function formatDate(dateString) {
         minute: "2-digit"
     });
 }
+
 
 function agruparEventosPorMes(eventos){
     return eventos.reduce((acc, evento) => {
