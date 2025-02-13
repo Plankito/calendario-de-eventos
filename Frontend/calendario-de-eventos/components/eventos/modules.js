@@ -476,7 +476,7 @@ function formatDate(dateString) {
 
 
 function agruparEventosPorMes(eventos){
-    return eventos.reduce((acc, evento) => {
+    const agrupado = eventos.reduce((acc, evento) => {
         const dataInicio = new Date(evento.inicio);
         const mesAno = dataInicio.toLocaleString('default', { month: 'long', year: 'numeric' });
 
@@ -486,6 +486,17 @@ function agruparEventosPorMes(eventos){
 
         acc[mesAno].push(evento);
         return acc;
+    }, {});
+
+    const mesesOrdenados = Object.keys(agrupado).sort((a, b) => {
+        const dataA = new Date(agrupado[a][0].inicio);
+        const dataB = new Date(agrupado[b][0].inicio);
+        return dataA - dataB;
+    });
+
+    return mesesOrdenados.reduce((obj, mes) => {
+        obj[mes] = agrupado[mes].sort((a, b) => new Date(a.inicio) - new Date(b.inicio));
+        return obj;
     }, {});
 };
 
