@@ -5,7 +5,7 @@ import Cookies from 'js-cookie';
 
 export default function Register({ route }) {
   const [message, setMessage] = useState(null);
-  const [seePasswords, setSeePasswords] = useState('password');
+  const [seePass, setSeePass] = useState('password');
   const API_URL = process.env['NEXT_PUBLIC_API_URL'];
 
   const register = async (event) => {
@@ -72,15 +72,15 @@ export default function Register({ route }) {
         <input type="email" id="email" name="email" required />
 
         <label htmlFor="password">Senha</label>
-        <input type={seePasswords} id="password" name="password" minLength="6" required />
+        <input type={seePass} id="password" name="password" minLength="6" required />
 
         <label htmlFor="confirmPassword">Repita sua senha</label>
-        <input type={seePasswords} id="confirmPassword" name="confirmPassword" minLength="6" required />
+        <input type={seePass} id="confirmPassword" name="confirmPassword" minLength="6" required />
 
-        <label htmlFor="check-password" className="flex items-center gap-2 cursor-pointer">
-          <input formNoValidate type="checkbox" id="check-password" className="cursor-pointer" 
+        <label htmlFor="check-pass" className="flex items-center gap-2 cursor-pointer">
+          <input formNoValidate type="checkbox" id="check-pass" className="cursor-pointer" 
             onChange={(e) => {
-              setSeePasswords(e.target.checked ? "text" : "password");
+              setSeePass(e.target.checked ? "text" : "password");
             }} 
           />
           Ver senha
