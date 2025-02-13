@@ -5,6 +5,7 @@ import Cookies from 'js-cookie';
 
 export default function Logon({ route }) {
     const [message, setMessage] = useState(null);
+    const [seePasswords, setSeePasswords] = useState('password');
     
     const errorsMessage = message?.details?.errors ? message.details.errors.map(error => error.message) : [];
 
@@ -60,7 +61,19 @@ export default function Logon({ route }) {
                 <input type="text" id="identifier" name="identifier" className="block" autoComplete="username" />
 
                 <label htmlFor="password" className="block">Password</label>
-                <input type="password" id="login-password" name="password" className="block" autoComplete="current-password" />
+                <input type={seePasswords} id="login-password" name="password" className="block" autoComplete="current-password" />
+
+                <label htmlFor="check-password" className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" id="check-password" name="checkpassword" className="cursor-pointer" 
+                    onChange={(e) => {
+                      setSeePasswords(e.target.checked ? "text" : "password");
+                    }} 
+                  />
+                  Ver senha
+                </label>
+                
+
+
 
                 <button type="submit">Entrar</button>
 
