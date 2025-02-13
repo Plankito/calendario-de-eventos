@@ -194,7 +194,7 @@ async function addEvento(eventos, event, token, userData, setMessage, setEventos
         setEventos(updatedEventos);
 
         if (userIds.length > 0) {
-            compartilharEvento(res.data.documentId, userData, userIds, token, setMessage, setEventosShares);
+            await compartilharEvento(res.data.documentId, userData, userIds, token, setMessage, setEventosShares);
         }
         return res?.data;
 
@@ -206,10 +206,11 @@ async function addEvento(eventos, event, token, userData, setMessage, setEventos
 
 
 async function compartilharEvento(documentId, userData, userIds, token, setMessage, setEventosShares) {
+    if (!documentId || !userIds.length) return; 
     const requestBody = {
         data: {
             evento: documentId,
-            users_ids: Array.isArray(userIds) ? userIds : [userIds]
+            users_ids: userIds
         }
     };
 
@@ -221,30 +222,29 @@ async function compartilharEvento(documentId, userData, userIds, token, setMessa
         },
         body: JSON.stringify(requestBody)
     };
-
+    
     try {
         const response = await fetch(`${API_URL}/api/eventos-shares`, reqOptions);
         const data = await response.json();
 
         if (response.ok) {
-            setMessage({exito: "Evento compartilhado com sucesso!"});
+            setMessage({ exito: "Evento compartilhado com sucesso!" });
 
             const updatedSharesReq = await fetch(`${API_URL}/api/eventos-shares/?filters[users_ids][$eq]=${userData.id}&populate=*`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                headers: { 'Authorization': `Bearer ${token}` }
             });
             const updatedShares = await updatedSharesReq.json();
 
             setEventosShares(updatedShares);
         } else {
-            setMessage({error: data.error?.message} || {error: "Erro ao compartilhar o evento!"});
+            setMessage({ error: data.error?.message || "Erro ao compartilhar o evento!" });
         }
     } catch (error) {
         console.error("Erro ao compartilhar evento:", error);
-        setMessage({error: "Erro ao compartilhar evento!"});
+        setMessage({ error: "Erro ao compartilhar evento!" });
     }
 }
+
 
 async function editEvento(eventos, documentId, eventoEditado, token, setMessage, setEventos) {
     setMessage(null);
