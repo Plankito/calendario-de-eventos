@@ -31,6 +31,71 @@ function converterParaUTC(dateString) {
     return dataUC.toISOString();
 }
 
+async function aceitarEvento(eventos, evento, token, userData, setMessage, setEventos, setEventosShares) {
+    setMessage(null);
+    evento.inicio = converterParaUTC(evento.inicio);
+    evento.termino = converterParaUTC(evento.termino);
+  
+    const conflito = verificaConflito(eventos, evento);
+    if (conflito) {
+      setMessage({error: `Conflito com evento "${conflito.descricao}" de ${new Date(conflito.inicio).toLocaleString()} até ${new Date(conflito.termino).toLocaleString()}.`});
+      alert(`Conflito com evento "${conflito.descricao}" de ${new Date(conflito.inicio).toLocaleString()} até ${new Date(conflito.termino).toLocaleString()}.`);
+      return;
+    }
+  
+    try {
+      const responseGet = await fetch(`${API_URL}/api/eventos/${evento.documentId}?populate=*`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+  
+      const eventoAtual = await responseGet.json();
+  
+      if (eventoAtual.error) {
+        setMessage({ error: eventoAtual.error.message });
+        return;
+      }
+  
+      const idsAtuais = eventoAtual.data.shared_users_id.map((usuario) => usuario.id);
+
+
+      if (!idsAtuais.includes(userData.id)) {
+        idsAtuais.push(userData.id); 
+      }
+      const requestBody = {
+        data: {
+          shared_users_id: idsAtuais
+        }
+      };
+
+      const responsePut = await fetch(`${API_URL}/api/eventos/${evento.documentId}?populate=*`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(requestBody),
+      });
+  
+      const data = await responsePut.json();
+  
+      if (data.error) {
+        setMessage({ error: data.error.message });
+      } else {
+        setEventos(prevEventos => ({...prevEventos,data: Array.isArray(prevEventos.data) ? [...prevEventos.data, evento] : [evento]}));
+        setEventosShares(prevShares => ({...prevShares,data: Array.isArray(prevShares.data) ? [...prevShares.data, userData.id] : [userData.id]}));
+        setMessage({ message: 'Evento aceito com sucesso!' });
+        return data;
+      }
+    } catch (error) {
+      console.error('Erro ao aceitar o evento:', error);
+      setMessage({ error: 'Ocorreu um erro ao aceitar o evento.' });
+    }
+  }
+  
+
 async function addEvento(eventos, event, token, userData, setMessage, setEventos, setEventosShares, evento) {
     setMessage(null);
 
@@ -203,7 +268,7 @@ async function editEvento(eventos, documentId, eventoEditado, token, setMessage,
 
 
     try {
-        const req = await fetch(`${API_URL}/api/eventos/${documentId}`, reqOptions);
+        const req = await fetch(`${API_URL}/api/eventos/${documentId}?populate=*`, reqOptions);
         const res = await req.json();
 
         if (res.error) {
@@ -223,6 +288,54 @@ async function editEvento(eventos, documentId, eventoEditado, token, setMessage,
     }
 }
 
+async function sairDoEvento(documentId, token, setEventos, setMessage, setEditandoEventoId, userData) {
+    if (!documentId) return;
+
+    const confirmDelete = window.confirm("Tem certeza que deseja sair deste evento?");
+    if (!confirmDelete) return;
+
+    try {
+        const responseGet = await fetch(`${API_URL}/api/eventos/${documentId}?populate=*`, {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+        });
+
+        if (!responseGet.ok) throw new Error("Erro ao buscar evento");
+        const evento = await responseGet.json();
+        let users_shared = evento.data.shared_users_id.map((usuario) => usuario.id);
+
+        if (users_shared.includes(userData.id)) {
+            users_shared = users_shared.filter(userId => userId !== userData.id);
+        }
+
+        const responsePut = await fetch(`${API_URL}/api/eventos/${documentId}`, {
+            method: "PUT",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                data: {
+                    shared_users_id: users_shared,
+                },
+            }),
+        });
+
+        if (!responsePut.ok) throw new Error("Erro ao atualizar evento");
+
+        setEventos((prevEventos) => ({...prevEventos,data: Array.isArray(prevEventos.data) ? prevEventos.data.filter((evento) => evento.id !== documentId) : []
+}));
+        setMessage({exito: "Você saiu do evento com sucesso"});
+        setEditandoEventoId(null);
+
+    } catch (error) {
+        console.error("Erro:", error);
+        setMessage(`Erro: ${error.message}`);
+    }
+}
 
 async function deleteEvento(documentId, token, setEventos, setMessage, setEditandoEventoId, userData, eventosShares) {
     if (!documentId) return;
@@ -382,5 +495,8 @@ module.exports = {
     deleteEvento,
     recusarEvento,
     formatDate,
-    agruparEventosPorMes
+    agruparEventosPorMes,
+    aceitarEvento,
+    converterParaUTC,
+    sairDoEvento
  };

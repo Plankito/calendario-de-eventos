@@ -2,7 +2,7 @@ import styled from '@emotion/styled'
 import { useState, useEffect } from 'react'
 import returnUserEvents from './returnUserEvents'
 
-const { addEvento, editEvento, deleteEvento, recusarEvento, formatDate, agruparEventosPorMes } = require('../eventos/modules');
+const { addEvento, editEvento, deleteEvento, recusarEvento, formatDate, agruparEventosPorMes, aceitarEvento, converterParaUTC, sairDoEvento } = require('../eventos/modules');
 
 
 export default function Eventos({ token, userData }) {
@@ -16,7 +16,7 @@ export default function Eventos({ token, userData }) {
 
     useEffect(() => {
         if (token && userData?.id) {
-            returnUserEvents({ token, setFunction: setEventos, route: `eventos/?filters[user_id][$eq]=${userData.id}` });
+            returnUserEvents({ token, setFunction: setEventos, route: `eventos/?filters[$or][0][user_id][$eq]=${userData.id}&filters[$or][1][shared_users_id][$in]=${userData.id}&populate=*`});
             returnUserEvents({ token, setFunction: setEventosShares, route: `eventos-shares/?filters[users_ids][$eq]=${userData.id}&populate=*` });
         }
         if (message) {
@@ -37,56 +37,90 @@ export default function Eventos({ token, userData }) {
                         setFunction: false,
                         route: `eventos-shares/?filters[users_ids][$eq]=${userData.id}&populate=*`
                     });
-    
-                    if (!novosEventosShares?.data) {
+
+                    const novosEventos = await returnUserEvents({
+                        token,
+                        setFunction: setEventos,
+                        route: `eventos/?filters[$or][0][user_id][$eq]=${userData.id}&filters[$or][1][shared_users_id][$in]=${userData.id}&populate=*`
+                    });
+
+                    const novosEventosSharesData = novosEventosShares?.data || [];
+                    const novosEventosData = novosEventos?.data || [];
+
+                    const eventosSharesData = eventosShares?.data || [];
+                    const eventosData = eventos?.data || [];
+
+                    if (!novosEventosSharesData.length && !novosEventosData.length) {
                         return;
                     }
-    
+
                     let eventosAlterados = false;
-    
-                    novosEventosShares?.data.forEach((e) => {
-                        const eventoAnterior = eventosShares?.data.find((evento) => evento.id === e.id);
-    
+
+                    novosEventosSharesData.forEach((e) => {
+                        const eventoAnterior = eventosSharesData.find((evento) => evento.id === e.id);
+
                         if (!eventoAnterior) {
-                            console.log(`Evento adicionado: ${e.id}`);
+                            console.log(`Evento compartilhado adicionado: ${e.id}`);
                             eventosAlterados = true;
-                        } 
-                        else if (eventoAnterior.updatedAt !== e.updatedAt || eventoAnterior.evento !== e.evento) {
-                            console.log(`Evento alterado: ${e.id}`);
+                        } else if (eventoAnterior.updatedAt !== e.updatedAt || eventoAnterior.evento !== e.evento) {
+                            console.log(`Evento compartilhado alterado: ${e.id}`);
                             eventosAlterados = true;
                         }
                     });
-    
-                    eventosShares?.data.forEach((eventoAnterior) => {
-                        const eventoAtual = novosEventosShares?.data.find((e) => e.id === eventoAnterior.id);
-    
+
+                    eventosSharesData.forEach((eventoAnterior) => {
+                        const eventoAtual = novosEventosSharesData.find((e) => e.id === eventoAnterior.id);
+
                         if (!eventoAtual) {
-                            console.log(`Evento removido: ${eventoAnterior.id}`);
+                            console.log(`Evento compartilhado removido: ${eventoAnterior.id}`);
                             eventosAlterados = true;
                         }
                     });
-    
+
+                    novosEventosData.forEach((e) => {
+                        const eventoAnterior = eventosData.find((evento) => evento.id === e.id);
+
+                        if (!eventoAnterior) {
+                            console.log(`Evento principal adicionado: ${e.id}`);
+                            eventosAlterados = true;
+                        } else if (eventoAnterior.updatedAt !== e.updatedAt || eventoAnterior.evento !== e.evento) {
+                            console.log(`Evento principal alterado: ${e.id}`);
+                            eventosAlterados = true;
+                        }
+                    });
+
+                    eventosData.forEach((eventoAnterior) => {
+                        const eventoAtual = novosEventosData.find((e) => e.id === eventoAnterior.id);
+
+                        if (!eventoAtual) {
+                            console.log(`Evento principal removido: ${eventoAnterior.id}`);
+                            eventosAlterados = true;
+                        }
+                    });
+
                     if (eventosAlterados) {
-                        console.log('Eventos alterados (adicionados, removidos ou alterados):', novosEventosShares.data);
+                        console.log('Eventos alterados (adicionados, removidos ou alterados)');
+                        setEventos(novosEventos);
                         setEventosShares(novosEventosShares);
                     }
                 } catch (error) {
                     console.log('Erro ao buscar eventos:', error.message);
                 }
             }, 5000);
-    
+
             return () => clearInterval(interval);
         }
-    }, [token, userData, eventosShares]);
+    }, [token, userData?.id, eventos, eventosShares]);
+
     
 
     const validarDatas = (inicio, termino) => {
         if (new Date(inicio) >= new Date(termino)) {
-            return "A data de início deve ser antes da data de término.";
+            return {error: "A data de início deve ser antes da data de término."};
         }
         const agora = new Date().getTime();
         if (new Date(inicio) < agora || new Date(termino) < agora) {
-            return "Não é possível adicionar eventos no passado!" ;
+            return {error: "Não é possível adicionar eventos no passado!"} ;
         }
         return null;
     };
@@ -97,6 +131,7 @@ export default function Eventos({ token, userData }) {
             descricao: evento.descricao,
             inicio: evento.inicio,
             termino: evento.termino,
+            // shared_users_id: evento.shared_users_id,
         });
     };
 
@@ -175,12 +210,12 @@ export default function Eventos({ token, userData }) {
                 {Object.keys(eventosFiltrados).map((mes) => (
                 <div key={mes} className="mes-div">
                     <h3>{mes[0].toUpperCase() + mes.slice(1)}</h3>
-                    {console.log(eventosFiltrados)}
                     {eventosFiltrados[mes].map((e, index) => (
-                        <div className="event-card" key={e.id}>
+                        <div className={`event-card ${e.user_id?.id !== userData.id || (e.user_id?.id === userData.id && e.shared_users_id?.length > 0) ? 'compartilhado' : ''}`} key={e.id}>
                             {editandoEventoId === e.id ? (
                                 <>
-                                    <input
+                                    {e.user_id?.id === userData.id ? (
+                                    <><input
                                         type="text"
                                         value={eventoEditado.descricao}
                                         onChange={(ev) => setEventoEditado({ ...eventoEditado, descricao: ev.target.value })}
@@ -188,16 +223,36 @@ export default function Eventos({ token, userData }) {
                                     <input
                                         type="datetime-local"
                                         value={eventoEditado.inicio.substring(0, 16)}
-                                        onChange={(ev) => setEventoEditado({ ...eventoEditado, inicio: ev.target.value })}
+                                        onChange={(ev) => setEventoEditado({ ...eventoEditado, inicio: converterParaUTC(ev.target.value) })}
                                     />
                                     <input
                                         type="datetime-local"
                                         value={eventoEditado.termino.substring(0, 16)}
-                                        onChange={(ev) => setEventoEditado({ ...eventoEditado, termino: ev.target.value })}
+                                        onChange={(ev) => setEventoEditado({ ...eventoEditado, termino: converterParaUTC(ev.target.value) })}
                                     />
-                                    <button onClick={() => handleSaveEdit(e.documentId)}>Salvar</button>
+                                    {console.log(eventoEditado)}
+                                    {/* <p>{eventoEditado.shared_users_id.map((user) =>user.email)}</p>
+                                    <input
+                                        type="text"
+                                        value={eventoEditado.shared_users_id}
+                                        onChange={(ev) => setEventoEditado({ ...eventoEditado, shared_users_id: ev.target.value })}
+                                    /> */}
+                                    <button onClick={() => handleSaveEdit(e.documentId)}>Salvar</button></>
+                                ):(
+                                <>
+                                    <p className="event-text">
+                                        {index + 1} - {e.descricao} - {formatDate(e.inicio)} até {formatDate(e.termino)}
+                                    </p>
+                                </>
+                                )}
+                                    
                                     <button className="secondary" onClick={() => setEditandoEventoId(null)}>Cancelar</button>
-                                    <button className="danger" onClick={() => deleteEvento(e.documentId, token, setEventos, setMessage, setEditandoEventoId, userData, eventosShares)}>🗑️ Excluir</button>
+                                    {e.user_id?.id === userData.id ?(
+                                        <button className="danger" onClick={() => deleteEvento(e.documentId, token, setEventos, setMessage, setEditandoEventoId, userData, eventosShares)}>🗑️ Excluir</button>
+                                    ):(
+                                        <button className="danger" onClick={() => sairDoEvento(e.documentId, token, setEventos, setMessage, setEditandoEventoId, userData)}>Sair</button>
+                                    )}
+                                    
 
                                     {messages.error?.[e.documentId] && (
                                         <p className="message error">
@@ -213,6 +268,12 @@ export default function Eventos({ token, userData }) {
                                 </>
                             ) : (
                                 <>
+                                    {e.user_id?.id !== userData.id && <p className="event-text">Compartilhado por {e.user_id?.username}</p>}
+                                    {e.user_id?.id === userData.id && e.shared_users_id?.length > 0 && (
+                                        <p className="event-text">
+                                            Compartilhado com {e.shared_users_id.map(usuario => usuario.username).join(", ")}
+                                        </p>
+                                    )}
                                     <p className="event-text">
                                         {index + 1} - {e.descricao} - {formatDate(e.inicio)} até {formatDate(e.termino)}
                                     </p>
@@ -226,13 +287,13 @@ export default function Eventos({ token, userData }) {
             </div>
 
             <div className="section">
-                <h2>Eventos Compartilhados Comigo</h2>
+                <h2>Convites para Eventos</h2>
                 {eventosShares && eventosShares.data.filter(e => e.evento && e.users_ids).sort((a, b) => new Date(a.evento.inicio) - new Date(b.evento.inicio)).map((e, index) => (
                     <div  className="event-card">
                         <p key={e.evento.id}>{index + 1} - {e.evento.descricao} - {formatDate(e.evento.inicio)} até {formatDate(e.evento.termino)}</p>
                         <button onClick={async () => {
                             try {
-                                const sucesso = await addEvento(eventos, null, token, userData, setMessages, setEventos, setEventosShares, e.evento);
+                                const sucesso = await aceitarEvento(eventos, e.evento, token, userData, setMessages, setEventos, setEventosShares);
                             if (sucesso) {
                                 await recusarEvento(e.documentId, token, userData, setEventosShares, setMessages, true);
                             }
@@ -337,7 +398,6 @@ const Container = styled.div`
         border: 1px solid #f5c6cb;
     }
 
-
     .event-card {
         background: #fff;
         padding: 15px;
@@ -349,7 +409,9 @@ const Container = styled.div`
         border: 1px solid #ddd;
         box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
     }
-
+    .compartilhado {
+        border: 1px solid #0056b3;
+    }
     .event-text {
         font-size: 16px;
         font-weight: bold;
